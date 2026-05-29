@@ -1,0 +1,9 @@
+title = "GitRevolver gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fake example identifiers"
+paths = ['''examples/.*''', '''README.md''']
+regexes = ['''team_xxx''', '''prj_xxx''', '''abcdxyz''']

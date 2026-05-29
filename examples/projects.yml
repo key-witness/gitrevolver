@@ -1,0 +1,27 @@
+version: 1
+projects:
+  client-a-app:
+    name: Client A App
+    aliases:
+      - client-a.example
+      - client-a-app
+    identity: client-a
+    path: ~/code/client-a/app
+    github:
+      owner: client-a-org
+      repo: app
+      remoteSsh: git@github-client-a:client-a-org/app.git
+    vercel:
+      mode: github-auto-deploy
+      orgId: team_xxx
+      projectId: prj_xxx
+      productionBranch: main
+    supabase:
+      projectRef: abcdxyz
+    safety:
+      protectedBranches:
+        - main
+      requireConfirm:
+        - git-push
+        - vercel-prod-deploy
+        - supabase-db-push

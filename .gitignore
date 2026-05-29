@@ -1,0 +1,45 @@
+# Build artifacts
+/gitx
+/gitrevolver
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Local secrets
+.env
+.env.*
+*.pem
+*.key
+*.pub
+.gitrevolver.local.yml
+testdata/secrets/
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Blog posts
+BLOG.md
+.last-branch
+CREDENTIALS_EXPLANATION.md

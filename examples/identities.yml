@@ -1,0 +1,17 @@
+version: 1
+identities:
+  client-a:
+    displayName: Client A
+    git:
+      name: Mip / Client A
+      email: dev@client-a.example
+    github:
+      username: client-a-gh
+      hostAlias: github-client-a
+      sshKeyPath: ~/.ssh/gitrevolver_client_a
+      apiTokenSecret: gitrevolver/client-a/github-token
+    vercel:
+      mode: github-auto-deploy
+      tokenSecret: gitrevolver/client-a/vercel-token
+    supabase:
+      tokenSecret: gitrevolver/client-a/supabase-token
