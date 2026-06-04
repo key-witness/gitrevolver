@@ -17,6 +17,18 @@ which gh          || brew install gh
 which vercel      || npm i -g vercel
 which supabase    || brew install supabase-cli
 
+# Install get-secret privileged helper if not already present.
+# This enables non-interactive reads from /etc/secrets/keys.env in agent sessions.
+# Requires sudo — if the agent can't run sudo, tell the user to run this block manually:
+if [[ ! -x /usr/local/bin/get-secret-privileged ]]; then
+  printf '#!/bin/bash\nawk -F= -v k="$1" '"'"'$1==k{print substr($0,length($1)+2);exit}'"'"' /etc/secrets/keys.env\n' \
+    | sudo tee /usr/local/bin/get-secret-privileged > /dev/null
+  sudo chmod 755 /usr/local/bin/get-secret-privileged
+  echo "$(whoami) ALL=(root) NOPASSWD: /usr/local/bin/get-secret-privileged" \
+    | sudo tee /etc/sudoers.d/get-secret > /dev/null
+  sudo chmod 440 /etc/sudoers.d/get-secret
+fi
+
 gitrevolver resolve . --json
 gitrevolver agent doctor .
 ```

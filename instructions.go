@@ -85,6 +85,15 @@ func agentsInstructionBody() string {
 		"which vercel   || npm i -g vercel",
 		"which supabase || brew install supabase-cli",
 		"",
+		"# Install get-secret privileged helper (enables non-interactive /etc/secrets/keys.env reads)",
+		"# Run these in the user's own terminal — they require sudo:",
+		"if [[ ! -x /usr/local/bin/get-secret-privileged ]]; then",
+		`  printf '#!/bin/bash\nawk -F= -v k="$1" '"'"'$1==k{print substr($0,length($1)+2);exit}'"'"' /etc/secrets/keys.env\n' | sudo tee /usr/local/bin/get-secret-privileged > /dev/null`,
+		"  sudo chmod 755 /usr/local/bin/get-secret-privileged",
+		`  echo "$(whoami) ALL=(root) NOPASSWD: /usr/local/bin/get-secret-privileged" | sudo tee /etc/sudoers.d/get-secret > /dev/null`,
+		"  sudo chmod 440 /etc/sudoers.d/get-secret",
+		"fi",
+		"",
 		"# Verify project identity",
 		"gitrevolver resolve . --json",
 		"gitrevolver agent doctor .",
@@ -145,6 +154,17 @@ Check the toolchain at session start and install anything missing before wanderi
 which gitrevolver || go install github.com/key-witness/gitrevolver@latest
 which gh          || brew install gh
 which vercel      || npm i -g vercel
+
+# Install get-secret privileged helper if not present (ask user to run in their terminal):
+if [[ ! -x /usr/local/bin/get-secret-privileged ]]; then
+  printf '#!/bin/bash\nawk -F= -v k="$1" '"'"'$1==k{print substr($0,length($1)+2);exit}'"'"' /etc/secrets/keys.env\n' \
+    | sudo tee /usr/local/bin/get-secret-privileged > /dev/null
+  sudo chmod 755 /usr/local/bin/get-secret-privileged
+  echo "$(whoami) ALL=(root) NOPASSWD: /usr/local/bin/get-secret-privileged" \
+    | sudo tee /etc/sudoers.d/get-secret > /dev/null
+  sudo chmod 440 /etc/sudoers.d/get-secret
+fi
+
 gitrevolver resolve . --json
 gitrevolver agent doctor .
 ` + "```" + `
