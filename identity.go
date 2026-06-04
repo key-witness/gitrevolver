@@ -257,12 +257,38 @@ var secretRemoveCmd = &cobra.Command{
 	},
 }
 
+// secretGetCmd prints a secret value to stdout for use in script injection.
+// Use for runtime patterns like: TOKEN=$(gitrevolver secret get . github-token) ./script
+// Never pipe or echo the output into chat, logs, or files.
+var secretGetCmd = &cobra.Command{
+	Use:   "get <identity-or-path> <secret-name>",
+	Short: "Print a secret value to stdout for script injection (not for chat or logs)",
+	Args:  cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		identityID := args[0]
+		// Resolve project path (handles ".", absolute paths, and project slugs)
+		if resolved, err := resolveProject(args[0]); err == nil {
+			identityID = resolved.Identity.ID
+		} else {
+			if _, err := config.FindIdentityByAlias(args[0]); err != nil {
+				return fmt.Errorf("could not resolve %q as identity or project: %w", args[0], err)
+			}
+		}
+		token, err := keychain.GetSecret(identityID, args[1])
+		if err != nil {
+			return fmt.Errorf("secret %q not found for %s: %w", args[1], identityID, err)
+		}
+		fmt.Fprint(os.Stdout, token)
+		return nil
+	},
+}
+
 func init() {
 	identityShowCmd.Flags().BoolVar(&identityShowJSON, "json", false, "Render machine-readable output")
 	identityRemoveCmd.Flags().BoolVar(&identityRemoveForce, "force", false, "Skip removal confirmation")
 	identityRemoveCmd.Flags().BoolVar(&identityRemoveKeys, "delete-keys", false, "Delete identity SSH key files")
 	identityCmd.AddCommand(identityAddCmd, identityListCmd, identityShowCmd, identityEditCmd, identityRemoveCmd)
-	secretCmd.AddCommand(secretSetCmd, secretCheckCmd, secretRemoveCmd)
+	secretCmd.AddCommand(secretSetCmd, secretGetCmd, secretCheckCmd, secretRemoveCmd)
 	rootCmd.AddCommand(identityCmd, secretCmd)
 }
 

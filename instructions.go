@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -74,15 +73,52 @@ func agentsInstructionBody() string {
 		"This repository uses GitRevolver for GitHub, Vercel, and Supabase identity routing.",
 		"GitRevolver stores provider tokens locally in secure platform storage. On macOS it uses the login Keychain; token values must not be pasted into chat, committed, logged, or written to YAML.",
 		"",
-		"Before credentialed project work, run these checks:",
+		"## Bootstrap",
+		"Before any credentialed work, verify the toolchain and install any missing tools automatically:",
 		"",
 		"```bash",
+		"# Install gitrevolver if missing",
+		"which gitrevolver || go install github.com/key-witness/gitrevolver@latest",
+		"",
+		"# Install missing provider CLIs",
+		"which gh       || brew install gh",
+		"which vercel   || npm i -g vercel",
+		"which supabase || brew install supabase-cli",
+		"",
+		"# Verify project identity",
 		"gitrevolver resolve . --json",
 		"gitrevolver agent doctor .",
-		"gitrevolver agent doctor . --online",
 		"```",
 		"",
-		"If GitRevolver is not initialized on this machine, show the user this local setup flow and ask them to run token commands in their own terminal:",
+		"If doctor fails, stop and report the mismatch. Do not attempt blind auth/login/token flows.",
+		"",
+		"## Running provider tools",
+		"Always inject credentials through GitRevolver rather than global auth state:",
+		"",
+		"```bash",
+		"gitrevolver exec . -- gh pr create",
+		"gitrevolver exec . -- vercel deploy",
+		"gitrevolver exec . -- supabase db push",
+		"gitrevolver exec . -- codex        # Codex with project credentials",
+		"gitrevolver exec . -- claude       # Claude Code with project credentials",
+		"```",
+		"",
+		"For extended sessions, open a project shell: `gitrevolver shell .`",
+		"",
+		"Do not run `gh auth switch`, `vercel login`, `supabase login`, or global Git author edits for this project.",
+		"For risky actions, run `gitrevolver agent guard . <action>` first.",
+		"",
+		"## Secrets",
+		"Retrieve runtime secrets for script injection only — never echo or log values:",
+		"",
+		"```bash",
+		"get-secret <alias>                          # reads /etc/secrets/keys.env (global)",
+		"gitrevolver secret get <identity> <name>   # reads macOS Keychain",
+		"# Inject pattern: API_KEY=$(get-secret mykey) ./script",
+		"```",
+		"",
+		"## First-time setup",
+		"If GitRevolver is not initialized on this machine, show the user this flow and ask them to run token commands in their own terminal:",
 		"",
 		"```bash",
 		"gitrevolver setup",
@@ -94,27 +130,45 @@ func agentsInstructionBody() string {
 		"gitrevolver project scan ~/code",
 		"gitrevolver agent install-instructions .",
 		"```",
-		"",
-		"Launch tools that need project credentials through GitRevolver:",
-		"",
-		"```bash",
-		"gitrevolver exec . -- codex",
-		"gitrevolver exec . -- gh pr create",
-		"gitrevolver exec . -- vercel deploy",
-		"gitrevolver exec . -- supabase db push",
-		"```",
-		"",
-		"Do not run `gh auth switch`, `vercel login`, `supabase login`, or global Git author edits for this project.",
-		"For risky actions, run `gitrevolver agent guard . <action>` first.",
 	}, "\n")
 }
 
 func claudeInstructionBody() string {
-	return fmt.Sprintf(`# GitRevolver identity instructions
+	return `# GitRevolver identity instructions
 Use GitRevolver before credentialed work in this repository.
 GitRevolver stores provider tokens locally in secure platform storage. On macOS it uses the login Keychain. Never ask the user to paste tokens into chat, logs, YAML, or docs.
-Resolve with %s, validate with %s, and prefer %s for GitHub, Vercel, and Supabase CLI commands.
-If setup is missing, show the user %s, then have them run %s locally for each provider token and confirm before writing AGENTS.md or CLAUDE.md with %s.
+
+## Bootstrap
+Check the toolchain at session start and install anything missing before wandering:
+
+` + "```bash" + `
+which gitrevolver || go install github.com/key-witness/gitrevolver@latest
+which gh          || brew install gh
+which vercel      || npm i -g vercel
+gitrevolver resolve . --json
+gitrevolver agent doctor .
+` + "```" + `
+
+If doctor fails, stop and report the mismatch. Do not attempt blind auth/login/token flows.
+
+## Working with this project
+- Resolve: ` + "`gitrevolver resolve . --json`" + `
+- Validate: ` + "`gitrevolver agent doctor . --online`" + `
+- Run provider tools: ` + "`gitrevolver exec . -- <command>`" + ` — injects GH_TOKEN, VERCEL_TOKEN, SUPABASE_ACCESS_TOKEN, GIT_SSH_COMMAND automatically
+- Launch sub-agents: ` + "`gitrevolver exec . -- codex`" + ` or ` + "`gitrevolver exec . -- claude`" + `
+- Extended session: ` + "`gitrevolver shell .`" + `
+
+Never run ` + "`gh auth switch`" + `, ` + "`vercel login`" + `, ` + "`supabase login`" + `, or global Git author edits for this project.
+Guard risky actions with ` + "`gitrevolver agent guard . <action>`" + `.
+
+## Secrets
+Retrieve runtime secrets for script injection (never echo values into chat or logs):
+- Global aliases: ` + "`get-secret <alias>`" + ` (reads /etc/secrets/keys.env)
+- Keychain: ` + "`gitrevolver secret get <identity> <name>`" + `
+- Inject pattern: ` + "`API_KEY=$(get-secret mykey) ./script`" + `
+
+## First-time setup
+If setup is missing, show the user ` + "`gitrevolver setup`" + `, then have them run ` + "`gitrevolver secret set <identity> <github-token|vercel-token|supabase-token>`" + ` locally for each provider token and confirm before writing AGENTS.md or CLAUDE.md with ` + "`gitrevolver agent install-instructions .`" + `.
 Never switch global provider auth for a GitRevolver project.
-Guard risky actions with %s.`, "`gitrevolver resolve . --json`", "`gitrevolver agent doctor . --online`", "`gitrevolver exec . -- <command>`", "`gitrevolver setup`", "`gitrevolver secret set <identity> <github-token|vercel-token|supabase-token>`", "`gitrevolver agent install-instructions .`", "`gitrevolver agent guard . <action>`")
+Guard risky actions with ` + "`gitrevolver agent guard . <action>`" + `.`
 }
